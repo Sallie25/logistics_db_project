@@ -34,5 +34,6 @@ class Settings(BaseSettings):
 # Creating an instance of the Settings class
 settings = Settings()
 
-print(BASE_DIR)
+# print(BASE_DIR)
+# print(ENV_FILE_PATH)
 
