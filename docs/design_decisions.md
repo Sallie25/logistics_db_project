@@ -105,9 +105,6 @@ the database asks
 
 That single difference completely changes the schema.
 
-*** Tip
-> Designing directly from the business domain is almost always better than forcing another industry's schema to fit your problem.
-
 ---
 
 # Entity Overview
