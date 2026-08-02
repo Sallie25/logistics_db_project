@@ -1,6 +1,7 @@
-from logistics_db.database import Base
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
+
+from logistics_db.database import Base
 
 
 class Client(Base):
@@ -11,5 +12,5 @@ class Client(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(150))
-    email: Mapped[str] = mapped_column(String(150), unique=True)
-    phone_no: Mapped[str] = mapped_column(String(30))
+    email: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    phone_no: Mapped[str] = mapped_column(String(30), nullable=False)
