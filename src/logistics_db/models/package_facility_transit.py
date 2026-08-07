@@ -13,10 +13,15 @@ class PackageFacilityTransit(Base):
     """
     __tablename__ = "package_facility_transits"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    package_id: Mapped[int] = mapped_column(ForeignKey("packages.id"))
-    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.id"))
+    transit_id: Mapped[int] = mapped_column(primary_key=True)
+
     inbound_timestamp: Mapped[datetime] = mapped_column(nullable=False)
+
     outbound_timestamp: Mapped[datetime] = mapped_column(nullable=True)
+
     sorting_lane: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    # Connecting a package to the exact facility where it was scanned or processed
+    package_id: Mapped[int] = mapped_column(ForeignKey("packages.package_id"))
+    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
     
