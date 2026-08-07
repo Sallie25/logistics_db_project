@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String, func
+from sqlalchemy import ForeignKey, Numeric, String, func, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -25,7 +25,7 @@ class Payment(Base):
 
     payment_status: Mapped[str] = mapped_column(String(30), default="pending")
 
-    transaction_timestamp: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
+    transaction_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now(), nullable=False)
 
     # Linking each payment to its corresponding shipment booking and payer client
     booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"), unique=True)

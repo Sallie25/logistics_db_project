@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String,DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -15,9 +15,9 @@ class PackageFacilityTransit(Base):
 
     transit_id: Mapped[int] = mapped_column(primary_key=True)
 
-    inbound_timestamp: Mapped[datetime] = mapped_column(nullable=False)
+    inbound_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
 
-    outbound_timestamp: Mapped[datetime] = mapped_column(nullable=True)
+    outbound_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True),nullable=True)
 
     sorting_lane: Mapped[str] = mapped_column(String(50), nullable=False)
 
