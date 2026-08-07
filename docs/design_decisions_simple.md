@@ -1,4 +1,4 @@
-# Design Decisions — DHL-Style Logistics Database (Beginner-Friendly Version)
+# Design Decisions — DHL-Style Logistics Database
 
 <div align="center">
 
