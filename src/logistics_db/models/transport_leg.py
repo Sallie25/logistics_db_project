@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -28,6 +28,8 @@ class TransportLeg(Base):
     actual_arrival: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+    """Foreign key relationships to other tables in the database"""
+
     # Connecting each transport leg to the shipment it is moving
     shipment_id: Mapped[int] = mapped_column(ForeignKey("shipments.shipment_id"))
 
@@ -39,3 +41,13 @@ class TransportLeg(Base):
 
     # Assigning the driver responsible for operating the vehicle during this transport leg
     driver_id: Mapped[int] = mapped_column(ForeignKey("drivers.driver_id"))
+
+
+    """Check constraints to ensure data integrity and validity"""
+
+    __table_args__ = (
+                CheckConstraint(
+                            "leg_status IN ('planned', 'dispatched', 'in_transit', 'arrived')",
+                            name="chk_leg_status"
+                ),
+    )

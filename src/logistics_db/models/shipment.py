@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -20,9 +20,21 @@ class Shipment(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    """Foreign key relationships to other tables in the database"""
+
     # Linking each shipment to its corresponding shipment booking
     booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"))
     # Linking each shipment to its origin facility
     origin_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), nullable=False)
     # Linking each shipment to its destination facility
     destination_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), nullable=False)
+
+
+    """Check constraints to ensure data integrity and validity"""
+    
+    __table_args__ = (
+            CheckConstraint(
+                "shipment_status IN ('pending', 'in_transit', 'delivered','exception')",
+                name='chk_shipment_status'
+            ),
+    )

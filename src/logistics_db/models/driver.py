@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import CheckConstraint, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -26,5 +26,18 @@ class Driver(Base):
 
     operational_status: Mapped[str] = mapped_column(String(30), default="active", nullable=False)
 
+
+    """Foreign key relationships to other tables in the database"""
+
     # Connecting a driver to their home facility (where they are based or where they report to)
     home_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+
+
+    """Check constraints to ensure data integrity and validity"""
+
+    __table_args__ = (
+                CheckConstraint(
+                    "operational_status IN ('active','inactive','terminated')",
+                    name="chk_driver_operational_status"
+                ),
+    )

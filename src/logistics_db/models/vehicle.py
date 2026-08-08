@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String
+from sqlalchemy import CheckConstraint, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -22,5 +22,18 @@ class Vehicle(Base):
 
     operational_status: Mapped[str] = mapped_column(String(30), default="active", nullable=False)
 
+
+    """Foreign key relationships to other tables in the database"""
+    
     # Linking each vehicle to its designated home facility
     home_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+
+
+    """Check constraints to ensure data integrity and validity"""
+
+    __table_args__ = (
+                CheckConstraint(
+                    "operational_status IN ('active','inactive','decomissioned')",
+                    name="chk_vehicle_operational_status"
+                ),
+    )

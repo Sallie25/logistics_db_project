@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -29,7 +29,9 @@ class ShipmentBooking(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-     # Linking each shipment booking to the client who is sending the shipment
+    """Foreign key relationships to other tables in the database"""
+
+    # Linking each shipment booking to the client who is sending the shipment
     sender_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"))
     # Linking each shipment booking to the client who is receiving the shipment
     receiver_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"))
@@ -37,3 +39,12 @@ class ShipmentBooking(Base):
     payer_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"))
     # Linking each shipment booking to the service type selected for the shipment
     service_type_id: Mapped[int] = mapped_column(ForeignKey("service_types.service_type_id"), nullable=False)
+
+    """Check constraints to ensure data integrity and validity"""
+
+    __table_args__ = (
+                    CheckConstraint(
+                        "booking_status IN ('PENDING', 'CONFIRMED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED')",
+                        name='chk_booking_status'
+                    ),
+    )
