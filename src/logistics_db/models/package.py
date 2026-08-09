@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlalchemy import ForeignKey, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
 
@@ -28,3 +28,11 @@ class Package(Base):
 
     # Connecting a package to the shipment it belongs to
     shipment_id: Mapped[int] = mapped_column(ForeignKey("shipments.shipment_id"), index=True, nullable=False)
+
+    # Establishing a relationship with the Shipment model to facilitate easy access to shipment details from a package instance
+    shipment: Mapped["Shipment"] = relationship("Shipment", back_populates="packages")
+
+    # Establishing a relationship with the PackageFacilityTransit model to track the transit history of the package through various facilities
+    facility_transits: Mapped[list["PackageFacilityTransit"]] = relationship(
+        "PackageFacilityTransit", back_populates="package"
+    )

@@ -1,7 +1,8 @@
 from datetime import datetime
+from importlib.resources import Package
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
 
@@ -38,3 +39,21 @@ class Shipment(Base):
                 name='chk_shipment_status'
             ),
     )
+
+    # one-to-one relationship with ShipmentBooking model for booking relationship
+    booking: Mapped["ShipmentBooking"] = relationship("ShipmentBooking", back_populates="shipment")
+
+    # one-to-many relationship with Facility model for origin
+    origin_facility: Mapped["Facility"] = relationship(
+        "Facility", foreign_keys=[origin_facility_id], back_populates="shipments_originating"
+    )
+
+    # one-to-many relationship with Facility model for destination
+    destination_facility: Mapped["Facility"] = relationship(
+        "Facility", foreign_keys=[destination_facility_id], back_populates="shipments_terminating"
+    )
+    # many-to-one relationship with Package model for packages relationship
+    packages: Mapped[list["Package"]] = relationship("Package", back_populates="shipment")
+
+    # many-to-one relationship with TransportLeg model for transport legs relationship
+    transport_legs: Mapped[list["TransportLeg"]] = relationship("TransportLeg", back_populates="shipment")

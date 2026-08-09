@@ -1,7 +1,7 @@
 from datetime import date
 
 from sqlalchemy import CheckConstraint, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
 
@@ -41,3 +41,9 @@ class Driver(Base):
                     name="chk_driver_operational_status"
                 ),
     )
+
+    # one-to-many relationship with Facility model for home facility relationship
+    home_facility: Mapped["Facility"] = relationship("Facility", back_populates="drivers")
+
+    # many-to-one relationship with TransportLeg model for driver relationship
+    transport_legs: Mapped[list["TransportLeg"]] = relationship("TransportLeg", back_populates="driver")

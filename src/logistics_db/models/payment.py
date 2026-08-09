@@ -2,9 +2,10 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
+from logistics_db.models.shipment_booking import ShipmentBooking
 
 
 class Payment(Base):
@@ -44,3 +45,12 @@ class Payment(Base):
                         name="chk_payment_status"
                         ),
     )
+
+
+    # --- One to One Relationship ---- Talks to the ShipmentBooking model for booking relationship
+
+    booking: Mapped["ShipmentBooking"] = relationship("ShipmentBooking", back_populates="payment")
+
+    # one to many relationship with Client model for payer relationship
+    payer: Mapped["Client"] = relationship("Client", back_populates="payments")
+

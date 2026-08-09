@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
 
@@ -25,3 +25,8 @@ class PackageFacilityTransit(Base):
     package_id: Mapped[int] = mapped_column(ForeignKey("packages.package_id"), index=True, nullable=False)
     facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index=True, nullable=False)
     
+    # one-to-many relationship with Package model for package relationship with facility transits
+    package: Mapped["Package"] = relationship("Package", back_populates="facility_transits")
+
+    # one-to-many relationship with Facility model for facility relationship with package transits
+    facility: Mapped["Facility"] = relationship("Facility", back_populates="package_transits")

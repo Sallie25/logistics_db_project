@@ -1,9 +1,11 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
+
+# from logistics_db.models.shipment_booking import ShipmentBooking
 
 
 class Client(Base):
@@ -33,3 +35,18 @@ class Client(Base):
     billing_country_code: Mapped[str] = mapped_column(String(2), nullable=False)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+    # ----- many to one relationship with shipment booking
+
+    bookings_sent: Mapped[list["ShipmentBooking"]] = relationship(
+    foreign_keys="ShipmentBooking.sender_client_id", back_populates="sender"
+    )
+    bookings_received: Mapped[list["ShipmentBooking"]] = relationship(
+        foreign_keys="ShipmentBooking.receiver_client_id", back_populates="receiver"
+    )
+    bookings_paid: Mapped[list["ShipmentBooking"]] = relationship(
+        foreign_keys="ShipmentBooking.payer_client_id", back_populates="payer"
+)
+    payments: Mapped[list["Payment"]] = relationship("Payment", back_populates="payer")
+   

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
 
@@ -51,3 +51,15 @@ class TransportLeg(Base):
                             name="chk_leg_status"
                 ),
     )
+
+
+    # one-to-many relationship with Shipment model for shipment relationship with transport legs
+    shipment: Mapped["Shipment"] = relationship("Shipment", back_populates="transport_legs")
+
+    # one-to-many relationship with Route model for route relationship with transport legs
+    route: Mapped["Route"] = relationship("Route", back_populates="transport_legs")
+    # one-to-many relationship with Vehicle model for vehicle relationship with transport legs
+    vehicle: Mapped["Vehicle"] = relationship("Vehicle", back_populates="transport_legs")
+
+    # one-to-many relationship with Driver model for driver relationship with transport legs
+    driver: Mapped["Driver"] = relationship("Driver", back_populates="transport_legs")

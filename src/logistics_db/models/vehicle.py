@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, ForeignKey, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
 
@@ -37,3 +37,9 @@ class Vehicle(Base):
                     name="chk_vehicle_operational_status"
                 ),
     )
+
+    # one-to-many relationship with Facility model for home facility relationship
+    home_facility: Mapped["Facility"] = relationship("Facility", back_populates="vehicles")
+
+    # many-to-one relationship with TransportLeg model for vehicle relationship
+    transport_legs: Mapped[list["TransportLeg"]] = relationship("TransportLeg", back_populates="vehicle")

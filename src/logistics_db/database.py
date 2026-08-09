@@ -10,7 +10,7 @@ class Base(DeclarativeBase):
 
 
 # TODO: creating the SQLALCHEMY engine using the settings.database_url 
-engine = create_engine(settings.database_url(), echo = True)
+engine = create_engine(settings.database_url(), echo = False)
 
 # TODO: creating a session factory that binds to the engine
 Session = sessionmaker(bind = engine)
