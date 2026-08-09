@@ -23,11 +23,11 @@ class Shipment(Base):
     """Foreign key relationships to other tables in the database"""
 
     # Linking each shipment to its corresponding shipment booking
-    booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"))
+    booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"), index = True, nullable = False)
     # Linking each shipment to its origin facility
-    origin_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), nullable=False)
+    origin_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index = True, nullable=False)
     # Linking each shipment to its destination facility
-    destination_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), nullable=False)
+    destination_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index = True, nullable=False)
 
 
     """Check constraints to ensure data integrity and validity"""

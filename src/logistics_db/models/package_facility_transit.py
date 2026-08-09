@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String,DateTime
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from logistics_db.database import Base
@@ -22,6 +22,6 @@ class PackageFacilityTransit(Base):
     sorting_lane: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Connecting a package to the exact facility where it was scanned or processed
-    package_id: Mapped[int] = mapped_column(ForeignKey("packages.package_id"))
-    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+    package_id: Mapped[int] = mapped_column(ForeignKey("packages.package_id"), index=True, nullable=False)
+    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index=True, nullable=False)
     

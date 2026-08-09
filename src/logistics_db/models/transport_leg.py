@@ -31,16 +31,16 @@ class TransportLeg(Base):
     """Foreign key relationships to other tables in the database"""
 
     # Connecting each transport leg to the shipment it is moving
-    shipment_id: Mapped[int] = mapped_column(ForeignKey("shipments.shipment_id"))
+    shipment_id: Mapped[int] = mapped_column(ForeignKey("shipments.shipment_id"), index = True, nullable = False)
 
     # Connecting each transport leg to the planned route it follows
-    route_id: Mapped[int] = mapped_column(ForeignKey("routes.route_id"))
+    route_id: Mapped[int] = mapped_column(ForeignKey("routes.route_id"), index = True, nullable = False)
 
     # Assigning the vehicle responsible for this transport leg
-    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.vehicle_id"))
+    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.vehicle_id"), index = True, nullable = False)
 
     # Assigning the driver responsible for operating the vehicle during this transport leg
-    driver_id: Mapped[int] = mapped_column(ForeignKey("drivers.driver_id"))
+    driver_id: Mapped[int] = mapped_column(ForeignKey("drivers.driver_id"), index = True, nullable = False)
 
 
     """Check constraints to ensure data integrity and validity"""

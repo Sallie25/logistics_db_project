@@ -27,4 +27,4 @@ class Package(Base):
     hazardous_materials_flag: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     # Connecting a package to the shipment it belongs to
-    shipment_id: Mapped[int] = mapped_column(ForeignKey("shipments.shipment_id"))
+    shipment_id: Mapped[int] = mapped_column(ForeignKey("shipments.shipment_id"), index=True, nullable=False)

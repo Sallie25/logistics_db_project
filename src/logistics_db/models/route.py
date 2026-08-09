@@ -24,7 +24,7 @@ class Route(Base):
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     # Linking each route to its origin and destination facilities
-    origin_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+    origin_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index=True, nullable=False)
 
     # Linking each route to its destination facility
-    destination_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+    destination_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index=True, nullable=False)

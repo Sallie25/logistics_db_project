@@ -32,13 +32,13 @@ class ShipmentBooking(Base):
     """Foreign key relationships to other tables in the database"""
 
     # Linking each shipment booking to the client who is sending the shipment
-    sender_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"))
+    sender_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"),index=True, nullable=False)
     # Linking each shipment booking to the client who is receiving the shipment
-    receiver_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"))
+    receiver_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"), index=True, nullable=False)
     # Linking each shipment booking to the client who is paying for the shipment
-    payer_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"))
+    payer_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"), index=True, nullable=False)
     # Linking each shipment booking to the service type selected for the shipment
-    service_type_id: Mapped[int] = mapped_column(ForeignKey("service_types.service_type_id"), nullable=False)
+    service_type_id: Mapped[int] = mapped_column(ForeignKey("service_types.service_type_id"), index=True, nullable=False)
 
     """Check constraints to ensure data integrity and validity"""
 

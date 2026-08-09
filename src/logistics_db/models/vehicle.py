@@ -26,7 +26,7 @@ class Vehicle(Base):
     """Foreign key relationships to other tables in the database"""
     
     # Linking each vehicle to its designated home facility
-    home_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+    home_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index = True, nullable=False)
 
 
     """Check constraints to ensure data integrity and validity"""

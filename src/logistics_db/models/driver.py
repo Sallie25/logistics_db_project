@@ -30,7 +30,7 @@ class Driver(Base):
     """Foreign key relationships to other tables in the database"""
 
     # Connecting a driver to their home facility (where they are based or where they report to)
-    home_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"))
+    home_facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.facility_id"), index = True, nullable=False)
 
 
     """Check constraints to ensure data integrity and validity"""

@@ -25,15 +25,15 @@ class Payment(Base):
 
     payment_status: Mapped[str] = mapped_column(String(30), default="pending")
 
-    transaction_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now(), nullable=False)
+    transaction_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now(), nullable=False, index=True)
 
     """Foreign key relationships to other tables in the database"""
 
     # Linking each payment to its corresponding shipment booking and payer client
-    booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"), unique=True)
+    booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"), unique=True, nullable=False)
 
     # Linking each payment to the client responsible for making the payment
-    payer_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"), nullable=False)
+    payer_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"), index=True, nullable=False)
 
 
     """Check constraints to ensure data integrity and validity"""
