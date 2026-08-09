@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,7 +40,7 @@ class Shipment(Base):
     )
 
     # one-to-one relationship with ShipmentBooking model for booking relationship
-    booking: Mapped["ShipmentBooking"] = relationship("ShipmentBooking", back_populates="shipment")
+    booking: Mapped["ShipmentBooking"] = relationship("ShipmentBooking", back_populates="shipments")
 
     # one-to-many relationship with Facility model for origin
     origin_facility: Mapped["Facility"] = relationship(

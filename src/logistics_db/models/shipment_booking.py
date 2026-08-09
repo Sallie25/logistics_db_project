@@ -60,7 +60,7 @@ class ShipmentBooking(Base):
     service_type: Mapped["ServiceType"] = relationship(back_populates="bookings")
 
     # one to one relationship with Shipment model for shipment relationship
-    shipment: Mapped["Shipment"] = relationship("Shipment", back_populates="booking", uselist=False)
+    shipments: Mapped["Shipment"] = relationship("Shipment", back_populates="booking", uselist=False)
 
     # one to one relationship with Payment model for payment relationship
     payment: Mapped["Payment"] = relationship("Payment", back_populates="booking", uselist=False)
