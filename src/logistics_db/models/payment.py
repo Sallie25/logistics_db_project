@@ -5,7 +5,6 @@ from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Numeric, String, f
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from logistics_db.database import Base
-from logistics_db.models.shipment_booking import ShipmentBooking
 
 
 class Payment(Base):
