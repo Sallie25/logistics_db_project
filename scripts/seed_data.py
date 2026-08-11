@@ -84,6 +84,16 @@ class ShipmentBookingFactory(BaseFactory):
     requires_pickup = factory.Faker("boolean")
     quoted_amount = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
     quoted_currency_code = factory.Iterator(["USD", "NGN"])
+    pickup_address_line1 = factory.Maybe(
+    "requires_pickup",
+    yes_declaration=factory.Faker("street_address"),
+    no_declaration=None,
+    )
+    pickup_city = factory.Maybe(
+        "requires_pickup",
+        yes_declaration=factory.Faker("city"),
+        no_declaration=None,
+    )
 
 
 class PaymentFactory(BaseFactory):
@@ -97,6 +107,7 @@ class PaymentFactory(BaseFactory):
     payment_type = factory.Iterator(["BASE_FREIGHT", "CUSTOMS_DUTY", "WEIGHT_ADJUSTMENT"])
     payment_method = factory.Iterator(["CARD", "BANK_TRANSFER", "CORPORATE_ACCOUNT"])
     payment_status = factory.Iterator(["pending", "settled", "failed", "refunded"])
+    payment_reference = factory.Sequence(lambda n: f"TXN-{n:08d}")
 
 
 class RouteFactory(BaseFactory):
@@ -109,7 +120,7 @@ class RouteFactory(BaseFactory):
     distance_km = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
     standard_transit_hours = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
     transport_mode = factory.Iterator(["air", "road", "rail", "sea"])
-    is_active = True
+    is_active = factory.Faker("boolean", chance_of_getting_true=90)
 
 
 class VehicleFactory(BaseFactory):
@@ -147,6 +158,11 @@ class ShipmentFactory(BaseFactory):
     destination_facility = factory.SubFactory(FacilityFactory)
     shipment_status = factory.Iterator(["pending", "in_transit", "delivered", "exception"])
     estimated_delivery_date = factory.Faker("future_datetime", end_date="+10d")
+    actual_delivery_date = factory.Maybe(
+    factory.LazyAttribute(lambda o: o.shipment_status == "delivered"),
+    yes_declaration=factory.Faker("past_datetime", start_date="-5d"),
+    no_declaration=None,
+    )
 
 
 class PackageFactory(BaseFactory):
@@ -159,7 +175,8 @@ class PackageFactory(BaseFactory):
     length_cm = factory.Faker("pydecimal", left_digits=2, right_digits=2, positive=True)
     width_cm = factory.Faker("pydecimal", left_digits=2, right_digits=2, positive=True)
     height_cm = factory.Faker("pydecimal", left_digits=2, right_digits=2, positive=True)
-    hazardous_materials_flag = False
+    hazardous_materials_flag = factory.Faker("boolean", chance_of_getting_true=10)
+    customs_value = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
 
 
 class TransportLegFactory(BaseFactory):
@@ -174,6 +191,17 @@ class TransportLegFactory(BaseFactory):
     leg_status = factory.Iterator(["planned", "dispatched", "in_transit", "arrived"])
     scheduled_departure = factory.Faker("future_datetime", end_date="+5d")
     scheduled_arrival = factory.Faker("future_datetime", end_date="+10d")
+    actual_departure = factory.Maybe(
+    factory.LazyAttribute(lambda o: o.leg_status in ["dispatched", "in_transit", "arrived"]),
+    yes_declaration=factory.Faker("past_datetime", start_date="-10d"),
+    no_declaration=None,
+    )
+    actual_arrival = factory.Maybe(
+    factory.LazyAttribute(lambda o: o.leg_status == "arrived"),
+    yes_declaration=factory.Faker("past_datetime", start_date="-5d"),
+    no_declaration=None,
+    )
+    
 
 
 class PackageFacilityTransitFactory(BaseFactory):
@@ -184,6 +212,11 @@ class PackageFacilityTransitFactory(BaseFactory):
     facility = factory.SubFactory(FacilityFactory)
     inbound_timestamp = factory.Faker("past_datetime", start_date="-30d")
     sorting_lane = factory.Sequence(lambda n: f"LANE-{n % 20}")
+    outbound_timestamp = factory.Maybe(
+    factory.Faker("boolean", chance_of_getting_true=70),
+    yes_declaration=factory.Faker("past_datetime", start_date="-20d"),
+    no_declaration=None,
+    )
 
 
 
@@ -191,6 +224,8 @@ class PackageFacilityTransitFactory(BaseFactory):
 # --- Entry point -----
 
 def main():
+    import random
+
     session = Session()
 
     # Clear existing data first, in reverse dependency order
@@ -216,43 +251,79 @@ def main():
     ]:
         factory_cls._meta.sqlalchemy_session = session
 
-    clients = ClientFactory.create_batch(20)
-    service_types = ServiceTypeFactory.create_batch(3)
-    facilities = FacilityFactory.create_batch(10)
+    # --- Step 1: create a small reusable POOL of parent records ---
+    clients_pool = ClientFactory.create_batch(100)
+    service_types_pool = ServiceTypeFactory.create_batch(3)
+    facilities_pool = FacilityFactory.create_batch(20)
     session.commit()
+    print(f"Created {len(clients_pool)} clients (pool)")
+    print(f"Created {len(service_types_pool)} service types (pool)")
+    print(f"Created {len(facilities_pool)} facilities (pool)")
 
-    bookings = ShipmentBookingFactory.create_batch(15)
+    # --- Step 2: scale shipment_bookings to 10k+, reusing the pool ---
+    bookings = ShipmentBookingFactory.create_batch(
+        10000,
+        sender=factory.LazyFunction(lambda: random.choice(clients_pool)),
+        receiver=factory.LazyFunction(lambda: random.choice(clients_pool)),
+        payer=factory.LazyFunction(lambda: random.choice(clients_pool)),
+        service_type=factory.LazyFunction(lambda: random.choice(service_types_pool)),
+    )
     session.commit()
-
-    payments = PaymentFactory.create_batch(15)
-    routes = RouteFactory.create_batch(8)
-    vehicles = VehicleFactory.create_batch(10)
-    drivers = DriverFactory.create_batch(10)
-    session.commit()
-
-    shipments = ShipmentFactory.create_batch(15)
-    session.commit()
-
-    packages = PackageFactory.create_batch(30)
-    session.commit()
-
-    transport_legs = TransportLegFactory.create_batch(25)
-    session.commit()
-
-    transits = PackageFacilityTransitFactory.create_batch(40)
-    session.commit()
-
-    print(f"Created {len(clients)} clients")
-    print(f"Created {len(service_types)} service types")
-    print(f"Created {len(facilities)} facilities")
     print(f"Created {len(bookings)} shipment bookings")
+
+    # --- Step 3: payments, reusing bookings pool + clients pool ---
+    payments = [PaymentFactory(booking=b, payer=random.choice(clients_pool)) for b in bookings]
+    session.commit()
     print(f"Created {len(payments)} payments")
+
+    # --- Step 4: everything else, kept at smaller/original scale ---
+    routes = RouteFactory.create_batch(
+        8,
+        origin_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+        destination_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+    )
+    vehicles = VehicleFactory.create_batch(
+        10, home_facility=factory.LazyFunction(lambda: random.choice(facilities_pool))
+    )
+    drivers = DriverFactory.create_batch(
+        10, home_facility=factory.LazyFunction(lambda: random.choice(facilities_pool))
+    )
+    session.commit()
     print(f"Created {len(routes)} routes")
     print(f"Created {len(vehicles)} vehicles")
     print(f"Created {len(drivers)} drivers")
+
+    shipments = ShipmentFactory.create_batch(
+        15,
+        booking=factory.LazyFunction(lambda: random.choice(bookings)),
+        origin_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+        destination_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+    )
+    session.commit()
     print(f"Created {len(shipments)} shipments")
+
+    packages = PackageFactory.create_batch(
+        30, shipment=factory.LazyFunction(lambda: random.choice(shipments))
+    )
+    session.commit()
     print(f"Created {len(packages)} packages")
+
+    transport_legs = TransportLegFactory.create_batch(
+        25,
+        shipment=factory.LazyFunction(lambda: random.choice(shipments)),
+        route=factory.LazyFunction(lambda: random.choice(routes)),
+        vehicle=factory.LazyFunction(lambda: random.choice(vehicles)),
+        driver=factory.LazyFunction(lambda: random.choice(drivers)),
+    )
+    session.commit()
     print(f"Created {len(transport_legs)} transport legs")
+
+    transits = PackageFacilityTransitFactory.create_batch(
+        40,
+        package=factory.LazyFunction(lambda: random.choice(packages)),
+        facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+    )
+    session.commit()
     print(f"Created {len(transits)} package facility transits")
 
     session.close()
