@@ -101,7 +101,7 @@ class PaymentFactory(BaseFactory):
         model = Payment
 
     booking = factory.SubFactory(ShipmentBookingFactory)
-    payer = factory.SubFactory(ClientFactory)
+    payer = factory.SelfAttribute("booking.payer")
     amount = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
     currency_code = factory.Iterator(["USD", "NGN"])
     payment_type = factory.Iterator(["BASE_FREIGHT", "CUSTOMS_DUTY", "WEIGHT_ADJUSTMENT"])
@@ -272,7 +272,7 @@ def main():
     print(f"Created {len(bookings)} shipment bookings")
 
     # --- Step 3: payments, reusing bookings pool + clients pool ---
-    payments = [PaymentFactory(booking=b, payer=random.choice(clients_pool)) for b in bookings]
+    payments = [PaymentFactory(booking=b, payer=b.payer) for b in bookings]
     session.commit()
     print(f"Created {len(payments)} payments")
 
