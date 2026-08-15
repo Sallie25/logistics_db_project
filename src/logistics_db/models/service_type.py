@@ -18,3 +18,7 @@ class ServiceType(Base):
     # --- Many to One Relationship ---- Talks to the ShipmentBooking model for service type relationship
 
     bookings: Mapped[list["ShipmentBooking"]] = relationship(back_populates="service_type")
+
+
+
+
