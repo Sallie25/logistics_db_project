@@ -15,7 +15,9 @@ class ShipmentBooking(Base):
 
     booking_reference: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
    
-    booking_status: Mapped[str] = mapped_column(String(50), default="pending")
+    # defined the booking_status column
+    # added index to it
+    booking_status: Mapped[str] = mapped_column(String(50), default="pending", index=True)
 
     requires_pickup: Mapped[bool] = mapped_column(default=False, nullable=False)
 

@@ -1,0 +1,95 @@
+Sort  (cost=1041.80..1041.80 rows=2 width=61) (actual time=29.898..29.911 rows=47.00 loops=1)
+  Sort Key: (sum(round((p.amount * COALESCE(r.rate_to_ngn, 1.00)), 2)))
+  Sort Method: quicksort  Memory: 27kB
+  Buffers: shared hit=6571
+  InitPlan 1
+    ->  Aggregate  (cost=520.87..520.88 rows=1 width=32) (actual time=12.257..12.262 rows=1.00 loops=1)
+          Buffers: shared hit=2286
+          ->  GroupAggregate  (cost=520.12..520.62 rows=20 width=36) (actual time=11.146..12.241 rows=100.00 loops=1)
+                Group Key: c_1.client_id
+                Buffers: shared hit=2286
+                ->  Sort  (cost=520.12..520.17 rows=20 width=26) (actual time=11.124..11.317 rows=2000.00 loops=1)
+                      Sort Key: c_1.client_id
+                      Sort Method: quicksort  Memory: 111kB
+                      Buffers: shared hit=2286
+                      ->  Nested Loop Left Join  (cost=229.09..519.69 rows=20 width=26) (actual time=2.014..10.316 rows=2000.00 loops=1)
+                            Buffers: shared hit=2286
+                            ->  Nested Loop  (cost=228.93..518.69 rows=20 width=14) (actual time=1.983..8.855 rows=2000.00 loops=1)
+                                  Buffers: shared hit=2282
+                                  ->  Hash Join  (cost=228.78..515.28 rows=20 width=18) (actual time=1.936..5.993 rows=2000.00 loops=1)
+                                        Hash Cond: ((p_1.payer_client_id = sb_1.payer_client_id) AND (p_1.booking_id = sb_1.booking_id))
+                                        Buffers: shared hit=281
+                                        ->  Seq Scan on payments p_1  (cost=0.00..234.00 rows=10000 width=18) (actual time=0.017..0.951 rows=10000.00 loops=1)
+                                              Buffers: shared hit=134
+                                        ->  Hash  (cost=198.78..198.78 rows=2000 width=8) (actual time=1.891..1.892 rows=2000.00 loops=1)
+                                              Buckets: 2048  Batches: 1  Memory Usage: 95kB
+                                              Buffers: shared hit=147
+                                              ->  Bitmap Heap Scan on shipment_bookings sb_1  (cost=27.79..198.78 rows=2000 width=8) (actual time=0.130..1.155 rows=2000.00 loops=1)
+                                                    Recheck Cond: ((booking_status)::text = 'CONFIRMED'::text)
+                                                    Heap Blocks: exact=143
+                                                    Buffers: shared hit=147
+                                                    ->  Bitmap Index Scan on ix_shipment_bookings_booking_status  (cost=0.00..27.29 rows=2000 width=0) (actual time=0.096..0.096 rows=2000.00 loops=1)
+                                                          Index Cond: ((booking_status)::text = 'CONFIRMED'::text)
+                                                          Index Searches: 1
+                                                          Buffers: shared hit=4
+                                  ->  Index Only Scan using clients_pkey on clients c_1  (cost=0.14..0.17 rows=1 width=4) (actual time=0.001..0.001 rows=1.00 loops=2000)
+                                        Index Cond: (client_id = sb_1.payer_client_id)
+                                        Heap Fetches: 0
+                                        Index Searches: 2000
+                                        Buffers: shared hit=2001
+                            ->  Memoize  (cost=0.16..0.18 rows=1 width=32) (actual time=0.000..0.000 rows=1.00 loops=2000)
+                                  Cache Key: p_1.currency_code
+                                  Cache Mode: logical
+                                  Hits: 1998  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                  Buffers: shared hit=4
+                                  ->  Index Scan using exchange_rates_pkey on exchange_rates r_1  (cost=0.15..0.17 rows=1 width=32) (actual time=0.011..0.012 rows=1.00 loops=2)
+                                        Index Cond: ((currency_code)::text = (p_1.currency_code)::text)
+                                        Index Searches: 2
+                                        Buffers: shared hit=4
+  ->  GroupAggregate  (cost=520.26..520.91 rows=2 width=61) (actual time=28.896..29.875 rows=47.00 loops=1)
+        Group Key: c.client_id
+        Filter: ((sum(round((p.amount * COALESCE(r.rate_to_ngn, 1.00)), 2)) > (InitPlan 1).col1) AND (count(DISTINCT sb.booking_id) > 5))
+        Rows Removed by Filter: 53
+        Buffers: shared hit=6571
+        ->  Sort  (cost=520.26..520.31 rows=20 width=47) (actual time=16.551..16.715 rows=2000.00 loops=1)
+              Sort Key: c.client_id, sb.booking_id
+              Sort Method: quicksort  Memory: 159kB
+              Buffers: shared hit=4285
+              ->  Nested Loop Left Join  (cost=229.09..519.82 rows=20 width=47) (actual time=1.647..14.389 rows=2000.00 loops=1)
+                    Buffers: shared hit=4285
+                    ->  Nested Loop  (cost=228.93..518.82 rows=20 width=35) (actual time=1.620..12.416 rows=2000.00 loops=1)
+                          Join Filter: (c.client_id = sb.payer_client_id)
+                          Buffers: shared hit=4281
+                          ->  Hash Join  (cost=228.78..515.28 rows=20 width=22) (actual time=1.602..6.955 rows=2000.00 loops=1)
+                                Hash Cond: ((p.payer_client_id = sb.payer_client_id) AND (p.booking_id = sb.booking_id))
+                                Buffers: shared hit=281
+                                ->  Seq Scan on payments p  (cost=0.00..234.00 rows=10000 width=18) (actual time=0.014..1.196 rows=10000.00 loops=1)
+                                      Buffers: shared hit=134
+                                ->  Hash  (cost=198.78..198.78 rows=2000 width=8) (actual time=1.576..1.578 rows=2000.00 loops=1)
+                                      Buckets: 2048  Batches: 1  Memory Usage: 95kB
+                                      Buffers: shared hit=147
+                                      ->  Bitmap Heap Scan on shipment_bookings sb  (cost=27.79..198.78 rows=2000 width=8) (actual time=0.150..1.022 rows=2000.00 loops=1)
+                                            Recheck Cond: ((booking_status)::text = 'CONFIRMED'::text)
+                                            Heap Blocks: exact=143
+                                            Buffers: shared hit=147
+                                            ->  Bitmap Index Scan on ix_shipment_bookings_booking_status  (cost=0.00..27.29 rows=2000 width=0) (actual time=0.116..0.116 rows=2000.00 loops=1)
+                                                  Index Cond: ((booking_status)::text = 'CONFIRMED'::text)
+                                                  Index Searches: 1
+                                                  Buffers: shared hit=4
+                          ->  Index Scan using clients_pkey on clients c  (cost=0.14..0.16 rows=1 width=21) (actual time=0.002..0.002 rows=1.00 loops=2000)
+                                Index Cond: (client_id = p.payer_client_id)
+                                Index Searches: 2000
+                                Buffers: shared hit=4000
+                    ->  Memoize  (cost=0.16..0.18 rows=1 width=32) (actual time=0.000..0.000 rows=1.00 loops=2000)
+                          Cache Key: p.currency_code
+                          Cache Mode: logical
+                          Hits: 1998  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=4
+                          ->  Index Scan using exchange_rates_pkey on exchange_rates r  (cost=0.15..0.17 rows=1 width=32) (actual time=0.006..0.006 rows=1.00 loops=2)
+                                Index Cond: ((currency_code)::text = (p.currency_code)::text)
+                                Index Searches: 2
+                                Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=44
+Planning Time: 2.436 ms
+Execution Time: 30.048 ms
