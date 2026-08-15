@@ -89,7 +89,7 @@ class ShipmentBookingFactory(BaseFactory):
     receiver = factory.SubFactory(ClientFactory)
     payer = factory.SubFactory(ClientFactory)
     service_type = factory.SubFactory(ServiceTypeFactory)
-    booking_status = factory.Iterator(["PENDING", "CONFIRMED", "IN_TRANSIT", "DELIVERED"])
+    booking_status = factory.Iterator(["PENDING", "CONFIRMED", "IN_TRANSIT", "DELIVERED", "CANCELLED"])
     requires_pickup = factory.Faker("boolean")
     quoted_amount = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
     quoted_currency_code = factory.Iterator(["USD", "NGN"])
@@ -333,14 +333,19 @@ def main():
     print(f"Created {len(vehicles)} vehicles")
     print(f"Created {len(drivers)} drivers")
 
+
+    bookings_needing_shipment = [
+    b for b in bookings if b.booking_status not in ("PENDING", "CANCELLED")
+    ]
     shipments = ShipmentFactory.create_batch(
-        15,
-        booking=factory.LazyFunction(lambda: random.choice(bookings)),
-        origin_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
-        destination_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+    len(bookings_needing_shipment),
+    booking=factory.Iterator(bookings_needing_shipment),
+    origin_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
+    destination_facility=factory.LazyFunction(lambda: random.choice(facilities_pool)),
     )
     session.commit()
     print(f"Created {len(shipments)} shipments")
+
 
     packages = PackageFactory.create_batch(
         30, shipment=factory.LazyFunction(lambda: random.choice(shipments))
