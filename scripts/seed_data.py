@@ -3,6 +3,9 @@ Seed script using factory_boy to generate realistic fake data,
 respecting FK dependency order.
 """
 
+import random
+from datetime import datetime, timedelta, timezone
+
 import factory
 
 from logistics_db.database import Session
@@ -43,6 +46,12 @@ class ClientFactory(BaseFactory):
     billing_state = factory.Faker("state")
     billing_postal_code = factory.Faker("postcode")
     billing_country_code = factory.Faker("country_code")
+    # Clients must exist before any booking references them as sender/receiver/payer.
+    # Bookings are generated in the -6M..now window, so anchoring clients to
+    # -18M..-6M guarantees created_at(client) < created_at(any booking that uses it).
+    created_at = factory.Faker(
+        "date_time_between", start_date="-18M", end_date="-6M", tzinfo=timezone.utc
+    )
 
 
 # --- ServiceType and Facility Factories ---
@@ -94,7 +103,9 @@ class ShipmentBookingFactory(BaseFactory):
         yes_declaration=factory.Faker("city"),
         no_declaration=None,
     )
-
+    created_at = factory.Faker(
+        "date_time_between", start_date="-6M", end_date="now", tzinfo=timezone.utc
+    )
 
 class PaymentFactory(BaseFactory):
     class Meta:
@@ -108,6 +119,13 @@ class PaymentFactory(BaseFactory):
     payment_method = factory.Iterator(["CARD", "BANK_TRANSFER", "CORPORATE_ACCOUNT"])
     payment_status = factory.Iterator(["pending", "settled", "failed", "refunded"])
     payment_reference = factory.Sequence(lambda n: f"TXN-{n:08d}")
+    # A payment can only happen after its booking was placed.
+    transaction_timestamp = factory.LazyAttribute(
+        lambda o: min(
+            o.booking.created_at + timedelta(hours=random.randint(1, 72)),
+            datetime.now(timezone.utc),
+        )
+    )
 
 
 class RouteFactory(BaseFactory):
@@ -157,11 +175,27 @@ class ShipmentFactory(BaseFactory):
     origin_facility = factory.SubFactory(FacilityFactory)
     destination_facility = factory.SubFactory(FacilityFactory)
     shipment_status = factory.Iterator(["pending", "in_transit", "delivered", "exception"])
-    estimated_delivery_date = factory.Faker("future_datetime", end_date="+10d")
+    # A shipment is created shortly after its booking is placed, never before it.
+    created_at = factory.LazyAttribute(
+        lambda o: min(
+            o.booking.created_at + timedelta(hours=random.randint(1, 48)),
+            datetime.now(timezone.utc),
+        )
+    )
+    # The estimate is made at shipment-creation time and points into the future
+    # relative to that moment, so it's allowed to land after "now".
+    estimated_delivery_date = factory.LazyAttribute(
+        lambda o: o.created_at + timedelta(days=random.randint(1, 10))
+    )
     actual_delivery_date = factory.Maybe(
-    factory.LazyAttribute(lambda o: o.shipment_status == "delivered"),
-    yes_declaration=factory.Faker("past_datetime", start_date="-5d"),
-    no_declaration=None,
+        factory.LazyAttribute(lambda o: o.shipment_status == "delivered"),
+        yes_declaration=factory.LazyAttribute(
+            lambda o: min(
+                o.created_at + timedelta(days=random.randint(1, 12)),
+                datetime.now(timezone.utc),
+            )
+        ),
+        no_declaration=None,
     )
 
 
@@ -189,16 +223,16 @@ class TransportLegFactory(BaseFactory):
     driver = factory.SubFactory(DriverFactory)
     leg_number = factory.Sequence(lambda n: n + 1)
     leg_status = factory.Iterator(["planned", "dispatched", "in_transit", "arrived"])
-    scheduled_departure = factory.Faker("future_datetime", end_date="+5d")
-    scheduled_arrival = factory.Faker("future_datetime", end_date="+10d")
+    scheduled_departure = factory.Faker("future_datetime", end_date="+5d", tzinfo=timezone.utc)
+    scheduled_arrival = factory.Faker("future_datetime", end_date="+10d", tzinfo=timezone.utc)
     actual_departure = factory.Maybe(
     factory.LazyAttribute(lambda o: o.leg_status in ["dispatched", "in_transit", "arrived"]),
-    yes_declaration=factory.Faker("past_datetime", start_date="-10d"),
+    yes_declaration=factory.Faker("past_datetime", start_date="-10d", tzinfo=timezone.utc),
     no_declaration=None,
     )
     actual_arrival = factory.Maybe(
     factory.LazyAttribute(lambda o: o.leg_status == "arrived"),
-    yes_declaration=factory.Faker("past_datetime", start_date="-5d"),
+    yes_declaration=factory.Faker("past_datetime", start_date="-5d", tzinfo=timezone.utc),
     no_declaration=None,
     )
     
@@ -210,11 +244,19 @@ class PackageFacilityTransitFactory(BaseFactory):
 
     package = factory.SubFactory(PackageFactory)
     facility = factory.SubFactory(FacilityFactory)
-    inbound_timestamp = factory.Faker("past_datetime", start_date="-30d")
+    # A package can't be scanned into a facility before its shipment even exists.
+    inbound_timestamp = factory.LazyAttribute(
+        lambda o: min(
+            o.package.shipment.created_at + timedelta(hours=random.randint(1, 96)),
+            datetime.now(timezone.utc),
+        )
+    )
     sorting_lane = factory.Sequence(lambda n: f"LANE-{n % 20}")
     outbound_timestamp = factory.Maybe(
     factory.Faker("boolean", chance_of_getting_true=70),
-    yes_declaration=factory.Faker("past_datetime", start_date="-20d"),
+    yes_declaration=factory.LazyAttribute(
+        lambda o: o.inbound_timestamp + timedelta(hours=random.randint(1, 48))
+    ),
     no_declaration=None,
     )
 
@@ -224,8 +266,6 @@ class PackageFacilityTransitFactory(BaseFactory):
 # --- Entry point -----
 
 def main():
-    import random
-
     session = Session()
 
     # Clear existing data first, in reverse dependency order
