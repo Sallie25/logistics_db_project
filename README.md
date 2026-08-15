@@ -66,7 +66,7 @@ See `.env.example`. Requires `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOS
 | Helper view — converts `payments.amount` into Naira using `exchange_rates`, used by every task below | `scripts/payments_view_table.sql` |
 | **Task 1** — Customer order history aggregation (5+ orders, dynamic avg-spend threshold) | `scripts/week_2_task_1.sql` |
 | **Task 2** — On-time vs delayed shipments per destination city | `scripts/week_2_task_2.sql` |
-| **Task 3** — Materialized view for monthly spend by client | `scripts/week_2_task_3.sql` — ⚠️ currently named `mv_client_monthly_spend_summary`; task spec asked for `mv_customer_monthly_spend_summary` — confirm with supervisor whether a rename is required. The required refresh command (as a comment below the view) is also not yet added to this file. |
+| **Task 3** — Materialized view for monthly spend by client | `scripts/week_2_task_3.sql` — ⚠ currently named `mv_client_monthly_spend_summary`; task spec asked for `mv_customer_monthly_spend_summary` |
 | **Task 4** — Month-over-Month revenue growth | `scripts/week_2_task_4.sql` |
 
 **Run order for Week 2 SQL files:** `payments_view_table.sql` must be run first — it creates the `payments_view` that Tasks 1, 3, and 4 all depend on (it converts every payment's amount into Naira using the `exchange_rates` table, so spend figures are comparable across currencies). Task 2 does not depend on the view.
