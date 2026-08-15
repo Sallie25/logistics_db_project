@@ -15,7 +15,9 @@ class Payment(Base):
 
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
-    currency_code: Mapped[str] = mapped_column(String(3), nullable=False)
+    currency_code: Mapped[str] = mapped_column(
+        ForeignKey("exchange_rates.currency_code"), nullable=False
+    )
 
     payment_type: Mapped[str] = mapped_column(String(30), nullable=False)
 
@@ -25,31 +27,30 @@ class Payment(Base):
 
     payment_status: Mapped[str] = mapped_column(String(30), default="pending")
 
-    transaction_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now(), nullable=False, index=True)
+    transaction_timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
 
     """Foreign key relationships to other tables in the database"""
 
-    # Linking each payment to its corresponding shipment booking and payer client
     booking_id: Mapped[int] = mapped_column(ForeignKey("shipment_bookings.booking_id"), unique=True, nullable=False)
 
-    # Linking each payment to the client responsible for making the payment
     payer_client_id: Mapped[int] = mapped_column(ForeignKey("clients.client_id"), index=True, nullable=False)
-
 
     """Check constraints to ensure data integrity and validity"""
 
     __table_args__ = (
-                    CheckConstraint(
-                        "payment_status IN ('pending', 'settled', 'failed','refunded')",
-                        name="chk_payment_status"
-                        ),
+        CheckConstraint(
+            "payment_status IN ('pending', 'settled', 'failed','refunded')",
+            name="chk_payment_status"
+        ),
     )
 
-
     # --- One to One Relationship ---- Talks to the ShipmentBooking model for booking relationship
-
     booking: Mapped["ShipmentBooking"] = relationship("ShipmentBooking", back_populates="payment")
 
     # one to many relationship with Client model for payer relationship
     payer: Mapped["Client"] = relationship("Client", back_populates="payments")
 
+    # many to one relationship with ExchangeRates model for currency relationship
+    currency: Mapped["ExchangeRates"] = relationship("ExchangeRates", back_populates="payments")
